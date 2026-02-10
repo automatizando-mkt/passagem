@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Providers } from "./providers";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Passagem — Passagens de Barco Online",
@@ -11,8 +13,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
-      <body>{children}</body>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className="min-h-screen bg-background font-sans antialiased">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

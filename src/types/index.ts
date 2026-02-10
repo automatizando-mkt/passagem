@@ -1,47 +1,189 @@
-/** Rota de viagem entre dois portos */
-export interface Rota {
-  id: string;
-  origem: string;
-  destino: string;
-  duracao_minutos: number;
-  preco: number;
-  ativa: boolean;
+// ============================================================
+// Tipos de Dominio — Sistema Passagem
+// ============================================================
+
+// --- Utilitarios ---
+
+export type ActionResult =
+  | { success: true }
+  | { success: false; error: string };
+
+// --- Roles ---
+
+export type UserRole = "SUPER_ADMIN" | "PROPRIETARIO" | "TRIPULACAO" | "VENDEDOR";
+
+// --- Entidades: Schema Public ---
+
+export interface Profile {
+  user_id: string;
+  role: UserRole;
+  nome: string;
+  created_at: string;
 }
 
-/** Embarcacao que realiza as viagens */
 export interface Embarcacao {
   id: string;
   nome: string;
   capacidade: number;
-  tipo: "lancha" | "balsa" | "catamar";
+  tipo: TipoEmbarcacao;
+  ativa: boolean;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
 }
 
-/** Viagem programada em uma data/hora especifica */
+export type TipoEmbarcacao = "lancha" | "balsa" | "catamara" | "ferry";
+
+export interface Itinerario {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  ativo: boolean;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+export interface PontoParada {
+  id: string;
+  itinerario_id: string;
+  nome_local: string;
+  ordem: number;
+  duracao_parada_min: number;
+  created_at: string;
+}
+
+export interface TipoAcomodacao {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  created_at: string;
+}
+
 export interface Viagem {
   id: string;
-  rota_id: string;
+  itinerario_id: string;
   embarcacao_id: string;
   data_saida: string;
-  vagas_disponiveis: number;
-  status: "programada" | "embarcando" | "em_viagem" | "concluida" | "cancelada";
+  status: StatusViagem;
+  observacoes: string | null;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
 }
 
-/** Passagem comprada por um usuario */
+export type StatusViagem =
+  | "programada"
+  | "embarque"
+  | "em_viagem"
+  | "concluida"
+  | "cancelada";
+
+export interface PrecoTrecho {
+  id: string;
+  itinerario_id: string;
+  ponto_origem_id: string;
+  ponto_destino_id: string;
+  tipo_acomodacao_id: string;
+  preco: number;
+  vigencia_inicio: string;
+  vigencia_fim: string | null;
+  created_at: string;
+  created_by: string | null;
+}
+
+// --- Entidades: Schema Vendas ---
+
 export interface Passagem {
   id: string;
   viagem_id: string;
   usuario_id: string;
   nome_passageiro: string;
   documento: string;
-  assento?: string;
-  status: "pendente" | "confirmada" | "cancelada" | "utilizada";
+  tipo_acomodacao_id: string;
+  ponto_embarque_id: string;
+  ponto_desembarque_id: string;
+  assento: string | null;
+  status: StatusPassagem;
   valor_pago: number;
-  data_compra: string;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
 }
 
-/** Tipo placeholder para o schema do Supabase (gerar com supabase gen types) */
-export interface Database {
-  public: {
-    Tables: Record<string, unknown>;
-  };
+export type StatusPassagem =
+  | "reservada"
+  | "confirmada"
+  | "cancelada"
+  | "utilizada"
+  | "reembolsada";
+
+export interface Encomenda {
+  id: string;
+  viagem_id: string;
+  remetente: string;
+  destinatario: string;
+  descricao: string;
+  peso_kg: number | null;
+  valor: number;
+  status: StatusEncomenda;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+export type StatusEncomenda =
+  | "recebida"
+  | "em_transito"
+  | "entregue"
+  | "devolvida";
+
+export interface Comissao {
+  id: string;
+  passagem_id: string;
+  vendedor_id: string;
+  valor: number;
+  percentual: number;
+  created_at: string;
+}
+
+// --- Entidades: Schema Financeiro ---
+
+export interface DespesaViagem {
+  id: string;
+  viagem_id: string;
+  descricao: string;
+  valor: number;
+  categoria: string;
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface FechamentoCaixa {
+  id: string;
+  data_fechamento: string;
+  operador_id: string;
+  total_vendas: number;
+  total_despesas: number;
+  saldo: number;
+  observacoes: string | null;
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface LogAuditoria {
+  id: string;
+  tabela: string;
+  registro_id: string;
+  acao: "INSERT" | "UPDATE" | "DELETE";
+  dados_anteriores: Record<string, unknown> | null;
+  dados_novos: Record<string, unknown> | null;
+  usuario_id: string | null;
+  ip: string | null;
+  created_at: string;
 }
