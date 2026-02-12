@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import type { UserRole } from "@/types";
+import { getDashboardMetrics } from "@/features/admin/dashboard/queries";
 import { DashboardContent } from "./dashboard-content";
 
 export default async function DashboardPage() {
@@ -14,17 +15,19 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, nome")
-    .eq("user_id", user.id)
-    .single<{ role: UserRole; nome: string }>();
+  const [profileRes, metrics] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("role, nome")
+      .eq("user_id", user.id)
+      .single<{ role: UserRole; nome: string }>(),
+    getDashboardMetrics(),
+  ]);
 
   return (
     <DashboardContent
-      email={user.email ?? ""}
-      role={profile?.role ?? "VENDEDOR"}
-      nome={profile?.nome ?? ""}
+      nome={profileRes.data?.nome ?? ""}
+      metrics={metrics}
     />
   );
 }

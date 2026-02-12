@@ -18,6 +18,7 @@ export interface Profile {
   user_id: string;
   role: UserRole;
   nome: string;
+  agencia_id: string | null;
   created_at: string;
 }
 
@@ -27,6 +28,7 @@ export interface Embarcacao {
   capacidade: number;
   tipo: TipoEmbarcacao;
   ativa: boolean;
+  controle_assentos: boolean;
   created_at: string;
   created_by: string | null;
   updated_at: string;
@@ -39,6 +41,8 @@ export interface Itinerario {
   id: string;
   nome: string;
   descricao: string | null;
+  origem: string | null;
+  destino: string | null;
   ativo: boolean;
   created_at: string;
   created_by: string | null;
@@ -95,6 +99,42 @@ export interface PrecoTrecho {
   created_by: string | null;
 }
 
+export interface Agencia {
+  id: string;
+  nome: string;
+  cnpj_cpf: string | null;
+  percentual_comissao: number;
+  ativa: boolean;
+  contato: string | null;
+  endereco: string | null;
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface SetorEmbarcacao {
+  id: string;
+  embarcacao_id: string;
+  nome: string;
+  descricao: string | null;
+  created_at: string;
+}
+
+export interface CapacidadeAcomodacao {
+  id: string;
+  embarcacao_id: string;
+  tipo_acomodacao_id: string;
+  quantidade: number;
+  created_at: string;
+}
+
+export interface Assento {
+  id: string;
+  embarcacao_id: string;
+  tipo_acomodacao_id: string;
+  numero: string;
+  created_at: string;
+}
+
 // --- Entidades: Schema Vendas ---
 
 export interface Passagem {
@@ -103,6 +143,7 @@ export interface Passagem {
   usuario_id: string;
   nome_passageiro: string;
   documento: string;
+  data_nascimento: string | null;
   tipo_acomodacao_id: string;
   ponto_embarque_id: string;
   ponto_desembarque_id: string;
@@ -130,6 +171,7 @@ export interface Encomenda {
   descricao: string;
   peso_kg: number | null;
   valor: number;
+  setor_id: string | null;
   status: StatusEncomenda;
   created_at: string;
   created_by: string | null;
@@ -175,6 +217,19 @@ export interface FechamentoCaixa {
   created_at: string;
   created_by: string | null;
 }
+
+export interface Transacao {
+  id: string;
+  tipo: TipoTransacao;
+  referencia_id: string | null;
+  valor: number;
+  metodo_pagamento: MetodoPagamento;
+  created_at: string;
+  created_by: string | null;
+}
+
+export type TipoTransacao = "passagem" | "frete" | "despesa";
+export type MetodoPagamento = "pix" | "cartao" | "dinheiro";
 
 export interface LogAuditoria {
   id: string;

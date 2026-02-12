@@ -7,7 +7,7 @@ jest.mock("next/cache", () => ({
 const mockSingle = jest.fn();
 const mockSelect = jest.fn(() => ({ single: mockSingle }));
 const mockInsert = jest.fn(() => ({ select: mockSelect }));
-const mockUpdate = jest.fn(() => ({ eq: jest.fn(() => Promise.resolve({ error: null })) }));
+const mockUpdate = jest.fn();
 const mockEq = jest.fn(() => Promise.resolve({ error: null }));
 const mockFrom = jest.fn((table: string) => ({
   insert: mockInsert,

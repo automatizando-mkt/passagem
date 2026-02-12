@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Pencil, Power } from "lucide-react";
+import Link from "next/link";
+import { Plus, Pencil, Power, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -16,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { usePermission } from "@/hooks/use-permission";
 import { toggleEmbarcacao } from "@/features/frota/actions";
-import type { Embarcacao } from "@/types";
+import type { Embarcacao, TipoAcomodacao, CapacidadeAcomodacao } from "@/types";
 import { EmbarcacaoDialog } from "./embarcacao-dialog";
 
 const TIPO_LABELS: Record<string, string> = {
@@ -28,9 +29,15 @@ const TIPO_LABELS: Record<string, string> = {
 
 interface EmbarcacoesContentProps {
   embarcacoes: Embarcacao[];
+  tiposAcomodacao: TipoAcomodacao[];
+  capacidades: CapacidadeAcomodacao[];
 }
 
-export function EmbarcacoesContent({ embarcacoes }: EmbarcacoesContentProps) {
+export function EmbarcacoesContent({
+  embarcacoes,
+  tiposAcomodacao,
+  capacidades,
+}: EmbarcacoesContentProps) {
   const { can, isLoading } = usePermission();
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -120,6 +127,17 @@ export function EmbarcacoesContent({ embarcacoes }: EmbarcacoesContentProps) {
                         >
                           <Power className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          asChild
+                          title="Capacidade"
+                        >
+                          <Link href={`/admin/embarcacoes/${emb.id}`}>
+                            <Settings2 className="h-4 w-4" />
+                          </Link>
+                        </Button>
                       </div>
                     </TableCell>
                   )}
@@ -138,6 +156,12 @@ export function EmbarcacoesContent({ embarcacoes }: EmbarcacoesContentProps) {
           setDialogOpen(false);
           router.refresh();
         }}
+        tiposAcomodacao={tiposAcomodacao}
+        capacidades={
+          editing
+            ? capacidades.filter((c) => c.embarcacao_id === editing.id)
+            : []
+        }
       />
     </div>
   );

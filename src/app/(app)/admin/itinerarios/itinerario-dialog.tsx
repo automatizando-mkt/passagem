@@ -28,6 +28,8 @@ interface ItinerarioData {
   id: string;
   nome: string;
   descricao: string | null;
+  origem: string | null;
+  destino: string | null;
 }
 
 interface ItinerarioDialogProps {
@@ -53,15 +55,20 @@ export function ItinerarioDialog({
     formState: { errors },
   } = useForm<ItinerarioFormData>({
     resolver: zodResolver(itinerarioFormSchema),
-    defaultValues: { nome: "", descricao: "" },
+    defaultValues: { nome: "", descricao: "", origem: "", destino: "" },
   });
 
   useEffect(() => {
     if (open) {
       reset(
         itinerario
-          ? { nome: itinerario.nome, descricao: itinerario.descricao ?? "" }
-          : { nome: "", descricao: "" },
+          ? {
+              nome: itinerario.nome,
+              descricao: itinerario.descricao ?? "",
+              origem: itinerario.origem ?? "",
+              destino: itinerario.destino ?? "",
+            }
+          : { nome: "", descricao: "", origem: "", destino: "" },
       );
     }
   }, [open, itinerario, reset]);
@@ -104,6 +111,35 @@ export function ItinerarioDialog({
             {errors.nome && (
               <p className="text-sm text-destructive">{errors.nome.message}</p>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="origem">Origem</Label>
+              <Input
+                id="origem"
+                placeholder="Ex: Manaus"
+                {...register("origem")}
+              />
+              {errors.origem && (
+                <p className="text-sm text-destructive">
+                  {errors.origem.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="destino">Destino</Label>
+              <Input
+                id="destino"
+                placeholder="Ex: Parintins"
+                {...register("destino")}
+              />
+              {errors.destino && (
+                <p className="text-sm text-destructive">
+                  {errors.destino.message}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">

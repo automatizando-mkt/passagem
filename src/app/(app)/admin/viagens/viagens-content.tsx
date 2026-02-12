@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePermission } from "@/hooks/use-permission";
-import { updateViagemStatus } from "@/features/viagens/actions";
+import { updateViagemStatus, duplicateViagem } from "@/features/viagens/actions";
 import type { Viagem, Embarcacao, Itinerario, StatusViagem } from "@/types";
 import { ViagemDialog } from "./viagem-dialog";
 
@@ -77,6 +77,16 @@ export function ViagensContent({
     const result = await updateViagemStatus(viagemId, status);
     if (result.success) {
       toast.success("Status atualizado");
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function handleDuplicate(viagemId: string) {
+    const result = await duplicateViagem(viagemId);
+    if (result.success) {
+      toast.success("Viagem duplicada com sucesso");
       router.refresh();
     } else {
       toast.error(result.error);
@@ -170,6 +180,15 @@ export function ViagensContent({
                         title="Editar"
                       >
                         <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleDuplicate(v.id)}
+                        title="Duplicar"
+                      >
+                        <Copy className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   )}

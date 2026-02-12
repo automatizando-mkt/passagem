@@ -8,6 +8,8 @@ export type Resource =
   | "itinerarios"
   | "encomendas"
   | "financeiro"
+  | "agencias"
+  | "comissoes"
   | "admin";
 
 // Nota: Isso e apenas UX. A seguranca real e no RLS do banco.
@@ -19,6 +21,8 @@ export const PERMISSION_MAP: Record<UserRole, Record<Resource, Action[]>> = {
     itinerarios: ["create", "read", "update", "delete"],
     encomendas: ["create", "read", "update", "delete"],
     financeiro: ["create", "read", "update", "delete"],
+    agencias: ["create", "read", "update", "delete"],
+    comissoes: ["create", "read", "update", "delete"],
     admin: ["create", "read", "update", "delete"],
   },
   PROPRIETARIO: {
@@ -28,6 +32,8 @@ export const PERMISSION_MAP: Record<UserRole, Record<Resource, Action[]>> = {
     itinerarios: ["create", "read", "update"],
     encomendas: ["read", "update"],
     financeiro: ["create", "read", "update"],
+    agencias: ["create", "read", "update"],
+    comissoes: ["read"],
     admin: ["read"],
   },
   TRIPULACAO: {
@@ -37,6 +43,8 @@ export const PERMISSION_MAP: Record<UserRole, Record<Resource, Action[]>> = {
     itinerarios: ["read"],
     encomendas: ["read"],
     financeiro: [],
+    agencias: [],
+    comissoes: [],
     admin: [],
   },
   VENDEDOR: {
@@ -46,6 +54,8 @@ export const PERMISSION_MAP: Record<UserRole, Record<Resource, Action[]>> = {
     itinerarios: ["read"],
     encomendas: ["create", "read", "update"],
     financeiro: [],
+    agencias: [],
+    comissoes: ["read"],
     admin: [],
   },
 };

@@ -24,13 +24,70 @@ export async function createEmbarcacao(
     return { success: false, error: parsed.error.issues[0].message };
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.from("embarcacoes").insert({
-    nome: parsed.data.nome,
-    capacidade: parsed.data.capacidade,
-    tipo: parsed.data.tipo,
-  });
+
+  // Calcular capacidade total a partir das acomodacoes
+  const capacidadeTotal =
+    parsed.data.acomodacoes.length > 0
+      ? parsed.data.acomodacoes.reduce((sum, a) => sum + a.quantidade, 0)
+      : parsed.data.capacidade;
+
+  // 1. Criar embarcacao
+  const { data: embarcacao, error } = await supabase
+    .from("embarcacoes")
+    .insert({
+      nome: parsed.data.nome,
+      capacidade: capacidadeTotal,
+      tipo: parsed.data.tipo,
+      controle_assentos: parsed.data.controle_assentos,
+    })
+    .select("id")
+    .single();
 
   if (error) return { success: false, error: error.message };
+
+  // 2. Inserir capacidade_acomodacao para cada acomodacao
+  if (parsed.data.acomodacoes.length > 0) {
+    const capacidadeRows = parsed.data.acomodacoes.map((a) => ({
+      embarcacao_id: embarcacao.id,
+      tipo_acomodacao_id: a.tipo_acomodacao_id,
+      quantidade: a.quantidade,
+    }));
+
+    const { error: capError } = await supabase
+      .from("capacidade_acomodacao")
+      .insert(capacidadeRows);
+
+    if (capError) return { success: false, error: capError.message };
+
+    // 3. Se controle_assentos ativo, gerar assentos numerados
+    if (parsed.data.controle_assentos) {
+      const assentoRows: {
+        embarcacao_id: string;
+        tipo_acomodacao_id: string;
+        numero: string;
+      }[] = [];
+
+      for (const a of parsed.data.acomodacoes) {
+        for (let i = 1; i <= a.quantidade; i++) {
+          assentoRows.push({
+            embarcacao_id: embarcacao.id,
+            tipo_acomodacao_id: a.tipo_acomodacao_id,
+            numero: String(i),
+          });
+        }
+      }
+
+      if (assentoRows.length > 0) {
+        const { error: assentoError } = await supabase
+          .from("assentos")
+          .insert(assentoRows);
+
+        if (assentoError)
+          return { success: false, error: assentoError.message };
+      }
+    }
+  }
+
   revalidatePath("/admin/embarcacoes");
   return { success: true };
 }
@@ -44,16 +101,84 @@ export async function updateEmbarcacao(
     return { success: false, error: parsed.error.issues[0].message };
 
   const supabase = await createServerSupabaseClient();
+
+  // Calcular capacidade total a partir das acomodacoes
+  const capacidadeTotal =
+    parsed.data.acomodacoes.length > 0
+      ? parsed.data.acomodacoes.reduce((sum, a) => sum + a.quantidade, 0)
+      : parsed.data.capacidade;
+
+  // 1. Atualizar embarcacao
   const { error } = await supabase
     .from("embarcacoes")
     .update({
       nome: parsed.data.nome,
-      capacidade: parsed.data.capacidade,
+      capacidade: capacidadeTotal,
       tipo: parsed.data.tipo,
+      controle_assentos: parsed.data.controle_assentos,
     })
     .eq("id", id);
 
   if (error) return { success: false, error: error.message };
+
+  // 2. Recriar capacidade_acomodacao (delete all + insert new)
+  const { error: delCapError } = await supabase
+    .from("capacidade_acomodacao")
+    .delete()
+    .eq("embarcacao_id", id);
+
+  if (delCapError) return { success: false, error: delCapError.message };
+
+  if (parsed.data.acomodacoes.length > 0) {
+    const capacidadeRows = parsed.data.acomodacoes.map((a) => ({
+      embarcacao_id: id,
+      tipo_acomodacao_id: a.tipo_acomodacao_id,
+      quantidade: a.quantidade,
+    }));
+
+    const { error: capError } = await supabase
+      .from("capacidade_acomodacao")
+      .insert(capacidadeRows);
+
+    if (capError) return { success: false, error: capError.message };
+  }
+
+  // 3. Recriar assentos se controle_assentos ativo
+  const { error: delAssentoError } = await supabase
+    .from("assentos")
+    .delete()
+    .eq("embarcacao_id", id);
+
+  if (delAssentoError)
+    return { success: false, error: delAssentoError.message };
+
+  if (parsed.data.controle_assentos && parsed.data.acomodacoes.length > 0) {
+    const assentoRows: {
+      embarcacao_id: string;
+      tipo_acomodacao_id: string;
+      numero: string;
+    }[] = [];
+
+    for (const a of parsed.data.acomodacoes) {
+      for (let i = 1; i <= a.quantidade; i++) {
+        assentoRows.push({
+          embarcacao_id: id,
+          tipo_acomodacao_id: a.tipo_acomodacao_id,
+          numero: String(i),
+        });
+      }
+    }
+
+    if (assentoRows.length > 0) {
+      const { error: assentoError } = await supabase
+        .from("assentos")
+        .insert(assentoRows);
+
+      if (assentoError)
+        return { success: false, error: assentoError.message };
+    }
+  }
+
   revalidatePath("/admin/embarcacoes");
   return { success: true };
 }
@@ -85,12 +210,35 @@ export async function createItinerario(
     return { success: false, error: parsed.error.issues[0].message };
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.from("itinerarios").insert({
-    nome: parsed.data.nome,
-    descricao: parsed.data.descricao || null,
-  });
+  const { data: itinerario, error } = await supabase
+    .from("itinerarios")
+    .insert({
+      nome: parsed.data.nome,
+      descricao: parsed.data.descricao || null,
+      origem: parsed.data.origem,
+      destino: parsed.data.destino,
+    })
+    .select("id")
+    .single();
 
   if (error) return { success: false, error: error.message };
+
+  // Auto-criar pontos de parada para origem e destino
+  await supabase.from("pontos_parada").insert([
+    {
+      itinerario_id: itinerario.id,
+      nome_local: parsed.data.origem,
+      ordem: 1,
+      duracao_parada_min: 0,
+    },
+    {
+      itinerario_id: itinerario.id,
+      nome_local: parsed.data.destino,
+      ordem: 2,
+      duracao_parada_min: 0,
+    },
+  ]);
+
   revalidatePath("/admin/itinerarios");
   return { success: true };
 }
@@ -109,6 +257,8 @@ export async function updateItinerario(
     .update({
       nome: parsed.data.nome,
       descricao: parsed.data.descricao || null,
+      origem: parsed.data.origem,
+      destino: parsed.data.destino,
     })
     .eq("id", id);
 

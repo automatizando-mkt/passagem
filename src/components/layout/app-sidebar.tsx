@@ -10,6 +10,17 @@ import {
   Calendar,
   DollarSign,
   LogOut,
+  Bed,
+  Tag,
+  Building2,
+  Layers,
+  ShoppingCart,
+  Ticket,
+  Package,
+  HandCoins,
+  Receipt,
+  Wallet,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +72,27 @@ const NAV_SECTIONS: NavSection[] = [
         resource: "itinerarios",
         action: "read",
       },
+      {
+        label: "Acomodacoes",
+        href: "/admin/tipos-acomodacao",
+        icon: Bed,
+        resource: "admin",
+        action: "read",
+      },
+      {
+        label: "Precos",
+        href: "/admin/precos-trechos",
+        icon: Tag,
+        resource: "admin",
+        action: "read",
+      },
+      {
+        label: "Setores",
+        href: "/admin/setores-embarcacao",
+        icon: Layers,
+        resource: "admin",
+        action: "read",
+      },
     ],
   },
   {
@@ -76,13 +108,79 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "Vendas",
+    items: [
+      {
+        label: "Nova Venda",
+        href: "/vendas",
+        icon: ShoppingCart,
+        resource: "passagens",
+        action: "create",
+      },
+      {
+        label: "Passagens",
+        href: "/vendas/passagens",
+        icon: Ticket,
+        resource: "passagens",
+        action: "read",
+      },
+      {
+        label: "Encomendas",
+        href: "/vendas/encomendas",
+        icon: Package,
+        resource: "encomendas",
+        action: "read",
+      },
+    ],
+  },
+  {
+    title: "Configuracoes",
+    items: [
+      {
+        label: "Agencias",
+        href: "/admin/agencias",
+        icon: Building2,
+        resource: "agencias",
+        action: "read",
+      },
+    ],
+  },
+  {
     title: "Financeiro",
     items: [
       {
-        label: "Financeiro",
-        href: "/admin/financeiro",
+        label: "Comissoes",
+        href: "/financeiro/comissoes",
+        icon: HandCoins,
+        resource: "comissoes",
+        action: "read",
+      },
+      {
+        label: "Transacoes",
+        href: "/financeiro/transacoes",
+        icon: Receipt,
+        resource: "financeiro",
+        action: "read",
+      },
+      {
+        label: "Despesas",
+        href: "/financeiro/despesas",
         icon: DollarSign,
         resource: "financeiro",
+        action: "read",
+      },
+      {
+        label: "Fechamento",
+        href: "/financeiro/fechamento",
+        icon: Wallet,
+        resource: "financeiro",
+        action: "read",
+      },
+      {
+        label: "Relatorios",
+        href: "/admin/relatorios",
+        icon: BarChart3,
+        resource: "admin",
         action: "read",
       },
     ],

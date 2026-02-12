@@ -23,6 +23,8 @@ interface ItinerarioRow {
   id: string;
   nome: string;
   descricao: string | null;
+  origem: string | null;
+  destino: string | null;
   ativo: boolean;
   pontosCount: number;
 }
@@ -81,6 +83,8 @@ export function ItinerariosContent({ itinerarios }: ItinerariosContentProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Origem</TableHead>
+                <TableHead>Destino</TableHead>
                 <TableHead>Descricao</TableHead>
                 <TableHead className="text-center">Paradas</TableHead>
                 <TableHead>Status</TableHead>
@@ -91,6 +95,8 @@ export function ItinerariosContent({ itinerarios }: ItinerariosContentProps) {
               {itinerarios.map((it) => (
                 <TableRow key={it.id}>
                   <TableCell className="font-medium">{it.nome}</TableCell>
+                  <TableCell>{it.origem || "—"}</TableCell>
+                  <TableCell>{it.destino || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {it.descricao || "—"}
                   </TableCell>
