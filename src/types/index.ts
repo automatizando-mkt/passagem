@@ -35,7 +35,7 @@ export interface Embarcacao {
   updated_by: string | null;
 }
 
-export type TipoEmbarcacao = "lancha" | "balsa" | "catamara" | "ferry";
+export type TipoEmbarcacao = "barco" | "navio" | "lancha" | "balsa" | "ferry";
 
 export interface Itinerario {
   id: string;
@@ -124,6 +124,7 @@ export interface CapacidadeAcomodacao {
   embarcacao_id: string;
   tipo_acomodacao_id: string;
   quantidade: number;
+  controle_assentos: boolean;
   created_at: string;
 }
 

@@ -31,7 +31,8 @@ import {
   createPassagem,
   fetchPrice,
 } from "@/features/vendas/passagens/actions";
-import type { Viagem, Itinerario, TipoAcomodacao } from "@/types";
+import type { Viagem, Itinerario, TipoAcomodacao, CapacidadeAcomodacao, Assento } from "@/types";
+import type { AssentoOcupado } from "./page";
 
 interface VendaDialogProps {
   open: boolean;
@@ -39,7 +40,10 @@ interface VendaDialogProps {
   viagem: Viagem;
   itinerario: Itinerario | null;
   tiposAcomodacao: TipoAcomodacao[];
-  onSuccess: () => void;
+  capacidades: CapacidadeAcomodacao[];
+  assentos: Assento[];
+  assentosOcupados: AssentoOcupado[];
+  onSuccess: (passagemId: string) => void;
 }
 
 export function VendaDialog({
@@ -48,6 +52,9 @@ export function VendaDialog({
   viagem,
   itinerario,
   tiposAcomodacao,
+  capacidades,
+  assentos,
+  assentosOcupados,
   onSuccess,
 }: VendaDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,7 +137,7 @@ export function VendaDialog({
 
     if (result.success) {
       toast.success("Passagem vendida com sucesso!");
-      onSuccess();
+      onSuccess(result.passagem_id);
     } else {
       toast.error(result.error);
     }
@@ -253,26 +260,33 @@ export function VendaDialog({
             </div>
           </div>
 
-          {/* Acomodacao */}
+          {/* Acomodacao — filtered by embarcacao capacidades */}
           <div className="space-y-2">
             <Label>Acomodacao</Label>
             <Controller
               control={control}
               name="tipo_acomodacao_id"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tiposAcomodacao.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              render={({ field }) => {
+                const tiposFiltrados = capacidades.length > 0
+                  ? tiposAcomodacao.filter((t) =>
+                      capacidades.some((c) => c.tipo_acomodacao_id === t.id),
+                    )
+                  : tiposAcomodacao;
+                return (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tiposFiltrados.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              }}
             />
             {errors.tipo_acomodacao_id && (
               <p className="text-sm text-destructive">
@@ -281,15 +295,54 @@ export function VendaDialog({
             )}
           </div>
 
-          {/* Assento */}
-          <div className="space-y-2">
-            <Label htmlFor="assento">Assento (opcional)</Label>
-            <Input
-              id="assento"
-              placeholder="Ex: A12"
-              {...register("assento")}
-            />
-          </div>
+          {/* Assento — Select when seat control active, hidden otherwise */}
+          {(() => {
+            const capSelecionada = capacidades.find(
+              (c) => c.tipo_acomodacao_id === tipoAcomodacaoId,
+            );
+            const temControle = capSelecionada?.controle_assentos ?? false;
+
+            if (!temControle || !tipoAcomodacaoId) return null;
+
+            const assentosDaAcomodacao = assentos.filter(
+              (a) => a.tipo_acomodacao_id === tipoAcomodacaoId,
+            );
+            const ocupados = assentosOcupados
+              .filter((o) => o.tipo_acomodacao_id === tipoAcomodacaoId)
+              .map((o) => o.assento);
+            const disponiveis = assentosDaAcomodacao.filter(
+              (a) => !ocupados.includes(a.numero),
+            );
+
+            return (
+              <div className="space-y-2">
+                <Label>Assento</Label>
+                <Controller
+                  control={control}
+                  name="assento"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o assento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {disponiveis.map((a) => (
+                          <SelectItem key={a.id} value={a.numero}>
+                            Assento {a.numero}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {disponiveis.length === 0 && (
+                  <p className="text-sm text-destructive">
+                    Todos os assentos estao ocupados
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Preco */}
           <div className="rounded-md border bg-muted/50 p-3">

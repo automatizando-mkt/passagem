@@ -32,13 +32,14 @@ export async function createEmbarcacao(
       : parsed.data.capacidade;
 
   // 1. Criar embarcacao
+  const hasAnyAssentos = parsed.data.acomodacoes.some((a) => a.controle_assentos);
   const { data: embarcacao, error } = await supabase
     .from("embarcacoes")
     .insert({
       nome: parsed.data.nome,
       capacidade: capacidadeTotal,
       tipo: parsed.data.tipo,
-      controle_assentos: parsed.data.controle_assentos,
+      controle_assentos: hasAnyAssentos,
     })
     .select("id")
     .single();
@@ -51,6 +52,7 @@ export async function createEmbarcacao(
       embarcacao_id: embarcacao.id,
       tipo_acomodacao_id: a.tipo_acomodacao_id,
       quantidade: a.quantidade,
+      controle_assentos: a.controle_assentos,
     }));
 
     const { error: capError } = await supabase
@@ -59,32 +61,31 @@ export async function createEmbarcacao(
 
     if (capError) return { success: false, error: capError.message };
 
-    // 3. Se controle_assentos ativo, gerar assentos numerados
-    if (parsed.data.controle_assentos) {
-      const assentoRows: {
-        embarcacao_id: string;
-        tipo_acomodacao_id: string;
-        numero: string;
-      }[] = [];
+    // 3. Gerar assentos numerados para acomodacoes com controle_assentos
+    const assentoRows: {
+      embarcacao_id: string;
+      tipo_acomodacao_id: string;
+      numero: string;
+    }[] = [];
 
-      for (const a of parsed.data.acomodacoes) {
-        for (let i = 1; i <= a.quantidade; i++) {
-          assentoRows.push({
-            embarcacao_id: embarcacao.id,
-            tipo_acomodacao_id: a.tipo_acomodacao_id,
-            numero: String(i),
-          });
-        }
+    for (const a of parsed.data.acomodacoes) {
+      if (!a.controle_assentos) continue;
+      for (let i = 1; i <= a.quantidade; i++) {
+        assentoRows.push({
+          embarcacao_id: embarcacao.id,
+          tipo_acomodacao_id: a.tipo_acomodacao_id,
+          numero: String(i),
+        });
       }
+    }
 
-      if (assentoRows.length > 0) {
-        const { error: assentoError } = await supabase
-          .from("assentos")
-          .insert(assentoRows);
+    if (assentoRows.length > 0) {
+      const { error: assentoError } = await supabase
+        .from("assentos")
+        .insert(assentoRows);
 
-        if (assentoError)
-          return { success: false, error: assentoError.message };
-      }
+      if (assentoError)
+        return { success: false, error: assentoError.message };
     }
   }
 
@@ -109,13 +110,14 @@ export async function updateEmbarcacao(
       : parsed.data.capacidade;
 
   // 1. Atualizar embarcacao
+  const hasAnyAssentos = parsed.data.acomodacoes.some((a) => a.controle_assentos);
   const { error } = await supabase
     .from("embarcacoes")
     .update({
       nome: parsed.data.nome,
       capacidade: capacidadeTotal,
       tipo: parsed.data.tipo,
-      controle_assentos: parsed.data.controle_assentos,
+      controle_assentos: hasAnyAssentos,
     })
     .eq("id", id);
 
@@ -134,6 +136,7 @@ export async function updateEmbarcacao(
       embarcacao_id: id,
       tipo_acomodacao_id: a.tipo_acomodacao_id,
       quantidade: a.quantidade,
+      controle_assentos: a.controle_assentos,
     }));
 
     const { error: capError } = await supabase
@@ -143,7 +146,7 @@ export async function updateEmbarcacao(
     if (capError) return { success: false, error: capError.message };
   }
 
-  // 3. Recriar assentos se controle_assentos ativo
+  // 3. Recriar assentos para acomodacoes com controle_assentos
   const { error: delAssentoError } = await supabase
     .from("assentos")
     .delete()
@@ -152,7 +155,7 @@ export async function updateEmbarcacao(
   if (delAssentoError)
     return { success: false, error: delAssentoError.message };
 
-  if (parsed.data.controle_assentos && parsed.data.acomodacoes.length > 0) {
+  if (parsed.data.acomodacoes.length > 0) {
     const assentoRows: {
       embarcacao_id: string;
       tipo_acomodacao_id: string;
@@ -160,6 +163,7 @@ export async function updateEmbarcacao(
     }[] = [];
 
     for (const a of parsed.data.acomodacoes) {
+      if (!a.controle_assentos) continue;
       for (let i = 1; i <= a.quantidade; i++) {
         assentoRows.push({
           embarcacao_id: id,

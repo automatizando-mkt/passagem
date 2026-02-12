@@ -67,8 +67,7 @@ export function EmbarcacaoDialog({
     defaultValues: {
       nome: "",
       capacidade: 0,
-      tipo: "lancha",
-      controle_assentos: false,
+      tipo: "barco",
       acomodacoes: [],
     },
   });
@@ -100,21 +99,20 @@ export function EmbarcacaoDialog({
         const acomodacoesData = capacidades.map((c) => ({
           tipo_acomodacao_id: c.tipo_acomodacao_id,
           quantidade: c.quantidade,
+          controle_assentos: c.controle_assentos,
         }));
 
         reset({
           nome: embarcacao.nome,
           capacidade: embarcacao.capacidade,
           tipo: embarcacao.tipo,
-          controle_assentos: embarcacao.controle_assentos,
           acomodacoes: acomodacoesData,
         });
       } else {
         reset({
           nome: "",
           capacidade: 0,
-          tipo: "lancha",
-          controle_assentos: false,
+          tipo: "barco",
           acomodacoes: [],
         });
       }
@@ -187,9 +185,10 @@ export function EmbarcacaoDialog({
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="barco">Barco</SelectItem>
+                    <SelectItem value="navio">Navio</SelectItem>
                     <SelectItem value="lancha">Lancha</SelectItem>
                     <SelectItem value="balsa">Balsa</SelectItem>
-                    <SelectItem value="catamara">Catamara</SelectItem>
                     <SelectItem value="ferry">Ferry</SelectItem>
                   </SelectContent>
                 </Select>
@@ -209,7 +208,7 @@ export function EmbarcacaoDialog({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  append({ tipo_acomodacao_id: "", quantidade: 1 })
+                  append({ tipo_acomodacao_id: "", quantidade: 1, controle_assentos: false })
                 }
                 disabled={fields.length >= tiposAcomodacao.length}
               >
@@ -290,6 +289,23 @@ export function EmbarcacaoDialog({
                     )}
                   </div>
 
+                  <div className="flex items-center gap-1 shrink-0" title="Controle de assentos">
+                    <Controller
+                      control={control}
+                      name={`acomodacoes.${index}.controle_assentos`}
+                      render={({ field }) => (
+                        <Checkbox
+                          id={`assentos_${index}`}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
+                    />
+                    <Label htmlFor={`assentos_${index}`} className="cursor-pointer text-xs whitespace-nowrap">
+                      Assentos
+                    </Label>
+                  </div>
+
                   <Button
                     type="button"
                     variant="ghost"
@@ -328,24 +344,6 @@ export function EmbarcacaoDialog({
               )}
             </div>
           )}
-
-          {/* Controle de assentos */}
-          <div className="flex items-center gap-2">
-            <Controller
-              control={control}
-              name="controle_assentos"
-              render={({ field }) => (
-                <Checkbox
-                  id="controle_assentos"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-            <Label htmlFor="controle_assentos" className="cursor-pointer">
-              Ativar controle de assentos?
-            </Label>
-          </div>
 
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>

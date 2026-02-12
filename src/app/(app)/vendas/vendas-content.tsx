@@ -25,8 +25,9 @@ import type {
   Itinerario,
   TipoAcomodacao,
   CapacidadeAcomodacao,
+  Assento,
 } from "@/types";
-import type { OcupacaoRecord } from "./page";
+import type { OcupacaoRecord, AssentoOcupado } from "./page";
 import { VendaDialog } from "./venda-dialog";
 
 interface VagasInfo {
@@ -42,6 +43,8 @@ interface VendasContentProps {
   itinerarios: Itinerario[];
   tiposAcomodacao: TipoAcomodacao[];
   capacidades: CapacidadeAcomodacao[];
+  assentos: Assento[];
+  assentosOcupados: AssentoOcupado[];
   ocupacao: OcupacaoRecord[];
 }
 
@@ -51,6 +54,8 @@ export function VendasContent({
   itinerarios,
   tiposAcomodacao,
   capacidades,
+  assentos,
+  assentosOcupados,
   ocupacao,
 }: VendasContentProps) {
   const router = useRouter();
@@ -257,7 +262,7 @@ export function VendasContent({
                           variant={getVagaBadgeVariant(info)}
                           className="text-xs"
                         >
-                          {info.tipo_nome}: {info.ocupadas}/{info.capacidade}
+                          {info.tipo_nome}: {info.capacidade - info.ocupadas}/{info.capacidade}
                         </Badge>
                       ))}
                     </div>
@@ -282,9 +287,18 @@ export function VendasContent({
           viagem={selectedViagem}
           itinerario={itinerarioMap.get(selectedViagem.itinerario_id) ?? null}
           tiposAcomodacao={tiposAcomodacao}
-          onSuccess={() => {
+          capacidades={capacidades.filter(
+            (c) => c.embarcacao_id === selectedViagem.embarcacao_id,
+          )}
+          assentos={assentos.filter(
+            (a) => a.embarcacao_id === selectedViagem.embarcacao_id,
+          )}
+          assentosOcupados={assentosOcupados.filter(
+            (o) => o.viagem_id === selectedViagem.id,
+          )}
+          onSuccess={(passagemId) => {
             setDialogOpen(false);
-            router.refresh();
+            router.push(`/vendas/passagens/${passagemId}`);
           }}
         />
       )}

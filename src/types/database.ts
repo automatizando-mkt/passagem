@@ -38,7 +38,7 @@ export interface Database {
           id: string;
           nome: string;
           capacidade: number;
-          tipo: "lancha" | "balsa" | "catamara" | "ferry";
+          tipo: "barco" | "navio" | "lancha" | "balsa" | "ferry";
           ativa: boolean;
           controle_assentos: boolean;
           created_at: string;
@@ -49,14 +49,14 @@ export interface Database {
         Insert: {
           nome: string;
           capacidade: number;
-          tipo: "lancha" | "balsa" | "catamara" | "ferry";
+          tipo: "barco" | "navio" | "lancha" | "balsa" | "ferry";
           ativa?: boolean;
           controle_assentos?: boolean;
         };
         Update: {
           nome?: string;
           capacidade?: number;
-          tipo?: "lancha" | "balsa" | "catamara" | "ferry";
+          tipo?: "barco" | "navio" | "lancha" | "balsa" | "ferry";
           ativa?: boolean;
           controle_assentos?: boolean;
         };
@@ -264,17 +264,20 @@ export interface Database {
           embarcacao_id: string;
           tipo_acomodacao_id: string;
           quantidade: number;
+          controle_assentos: boolean;
           created_at: string;
         };
         Insert: {
           embarcacao_id: string;
           tipo_acomodacao_id: string;
           quantidade: number;
+          controle_assentos?: boolean;
         };
         Update: {
           embarcacao_id?: string;
           tipo_acomodacao_id?: string;
           quantidade?: number;
+          controle_assentos?: boolean;
         };
         Relationships: [];
       };

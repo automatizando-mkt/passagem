@@ -5,6 +5,7 @@ import type {
   Itinerario,
   TipoAcomodacao,
   CapacidadeAcomodacao,
+  Assento,
 } from "@/types";
 import { VendasContent } from "./vendas-content";
 
@@ -14,10 +15,16 @@ export interface OcupacaoRecord {
   count: number;
 }
 
+export interface AssentoOcupado {
+  viagem_id: string;
+  tipo_acomodacao_id: string;
+  assento: string;
+}
+
 export default async function VendasPage() {
   const supabase = await createServerSupabaseClient();
 
-  const [viagensRes, embarcacoesRes, itinerariosRes, tiposRes, capacidadeRes] =
+  const [viagensRes, embarcacoesRes, itinerariosRes, tiposRes, capacidadeRes, assentosRes] =
     await Promise.all([
       supabase
         .from("viagens")
@@ -32,6 +39,7 @@ export default async function VendasPage() {
       supabase.from("itinerarios").select("*").eq("ativo", true).order("nome"),
       supabase.from("tipos_acomodacao").select("*").order("nome"),
       supabase.from("capacidade_acomodacao").select("*"),
+      supabase.from("assentos").select("*").order("numero"),
     ]);
 
   const viagens = (viagensRes.data ?? []) as Viagem[];
@@ -41,10 +49,12 @@ export default async function VendasPage() {
   const viagemIds = viagens.map((v) => v.id);
   let ocupacao: OcupacaoRecord[] = [];
 
+  let assentosOcupados: AssentoOcupado[] = [];
+
   if (viagemIds.length > 0) {
     const { data: passagens } = await supabase
       .from("passagens")
-      .select("viagem_id, tipo_acomodacao_id")
+      .select("viagem_id, tipo_acomodacao_id, assento")
       .in("viagem_id", viagemIds)
       .not("status", "in", '("cancelada","reembolsada")');
 
@@ -53,6 +63,15 @@ export default async function VendasPage() {
     for (const p of passagens ?? []) {
       const key = `${p.viagem_id}::${p.tipo_acomodacao_id}`;
       countMap.set(key, (countMap.get(key) ?? 0) + 1);
+
+      // Collect occupied seats
+      if (p.assento) {
+        assentosOcupados.push({
+          viagem_id: p.viagem_id,
+          tipo_acomodacao_id: p.tipo_acomodacao_id,
+          assento: p.assento,
+        });
+      }
     }
 
     ocupacao = Array.from(countMap.entries()).map(([key, count]) => {
@@ -68,6 +87,8 @@ export default async function VendasPage() {
       itinerarios={(itinerariosRes.data ?? []) as Itinerario[]}
       tiposAcomodacao={(tiposRes.data ?? []) as TipoAcomodacao[]}
       capacidades={(capacidadeRes.data ?? []) as CapacidadeAcomodacao[]}
+      assentos={(assentosRes.data ?? []) as Assento[]}
+      assentosOcupados={assentosOcupados}
       ocupacao={ocupacao}
     />
   );

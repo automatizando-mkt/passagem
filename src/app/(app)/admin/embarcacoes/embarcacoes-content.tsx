@@ -21,9 +21,10 @@ import type { Embarcacao, TipoAcomodacao, CapacidadeAcomodacao } from "@/types";
 import { EmbarcacaoDialog } from "./embarcacao-dialog";
 
 const TIPO_LABELS: Record<string, string> = {
+  barco: "Barco",
+  navio: "Navio",
   lancha: "Lancha",
   balsa: "Balsa",
-  catamara: "Catamara",
   ferry: "Ferry",
 };
 

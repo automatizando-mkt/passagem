@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import type { StatusPassagem } from "@/types";
 
 interface RelatorioViagemRow {
   viagem_id: string;
@@ -51,4 +52,74 @@ export async function getRelatorioPorViagem(): Promise<RelatorioViagemRow[]> {
       total_despesas: vDespesas.reduce((s: number, d: { valor: number }) => s + d.valor, 0),
     };
   }).sort((a: RelatorioViagemRow, b: RelatorioViagemRow) => b.data_saida.localeCompare(a.data_saida));
+}
+
+// --- Relatório de Passageiros ---
+
+export interface RelatorioPassageiroRow {
+  passagem_id: string;
+  nome_passageiro: string;
+  documento: string;
+  data_saida: string;
+  itinerario_nome: string;
+  embarcacao_nome: string;
+  embarque: string;
+  desembarque: string;
+  acomodacao: string;
+  assento: string | null;
+  valor_pago: number;
+  status: StatusPassagem;
+}
+
+export async function getRelatorioPassageiros(): Promise<RelatorioPassageiroRow[]> {
+  const supabase = await createServerSupabaseClient();
+
+  const [passagensRes, viagensRes, itinerariosRes, embarcacoesRes, pontosRes, tiposRes] =
+    await Promise.all([
+      supabase.from("passagens").select("id, viagem_id, nome_passageiro, documento, tipo_acomodacao_id, ponto_embarque_id, ponto_desembarque_id, assento, valor_pago, status"),
+      supabase.from("viagens").select("id, itinerario_id, embarcacao_id, data_saida"),
+      supabase.from("itinerarios").select("id, nome"),
+      supabase.from("embarcacoes").select("id, nome"),
+      supabase.from("pontos_parada").select("id, nome_local"),
+      supabase.from("tipos_acomodacao").select("id, nome"),
+    ]);
+
+  const viagemMap = new Map(
+    (viagensRes.data ?? []).map((v: { id: string; itinerario_id: string; embarcacao_id: string; data_saida: string }) => [v.id, v]),
+  );
+  const itinMap = new Map((itinerariosRes.data ?? []).map((i: { id: string; nome: string }) => [i.id, i.nome]));
+  const embMap = new Map((embarcacoesRes.data ?? []).map((e: { id: string; nome: string }) => [e.id, e.nome]));
+  const pontoMap = new Map((pontosRes.data ?? []).map((p: { id: string; nome_local: string }) => [p.id, p.nome_local]));
+  const tipoMap = new Map((tiposRes.data ?? []).map((t: { id: string; nome: string }) => [t.id, t.nome]));
+
+  return (passagensRes.data ?? [])
+    .map((p: {
+      id: string;
+      viagem_id: string;
+      nome_passageiro: string;
+      documento: string;
+      tipo_acomodacao_id: string;
+      ponto_embarque_id: string;
+      ponto_desembarque_id: string;
+      assento: string | null;
+      valor_pago: number;
+      status: StatusPassagem;
+    }) => {
+      const viagem = viagemMap.get(p.viagem_id) as { itinerario_id: string; embarcacao_id: string; data_saida: string } | undefined;
+      return {
+        passagem_id: p.id,
+        nome_passageiro: p.nome_passageiro,
+        documento: p.documento,
+        data_saida: viagem?.data_saida ?? "",
+        itinerario_nome: viagem ? (itinMap.get(viagem.itinerario_id) ?? "—") : "—",
+        embarcacao_nome: viagem ? (embMap.get(viagem.embarcacao_id) ?? "—") : "—",
+        embarque: pontoMap.get(p.ponto_embarque_id) ?? "—",
+        desembarque: pontoMap.get(p.ponto_desembarque_id) ?? "—",
+        acomodacao: tipoMap.get(p.tipo_acomodacao_id) ?? "—",
+        assento: p.assento,
+        valor_pago: p.valor_pago,
+        status: p.status,
+      };
+    })
+    .sort((a: RelatorioPassageiroRow, b: RelatorioPassageiroRow) => b.data_saida.localeCompare(a.data_saida));
 }
